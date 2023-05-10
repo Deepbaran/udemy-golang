@@ -15,6 +15,7 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
 - Everything (almost) in go is a Type.
 - Any variable that is declared in the code must be used. If we do not want to use it, just use '_' as the variable name.
 - := can only be used when declaring and intializing a varaible for the first time and not for reassigning.
+- There are not try-catch or Error Handling in Golang as of yet.
 
 ## Questions
 
@@ -26,12 +27,14 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
     - run multiple files:
       - > go run main.go filename.go
   - Go CLI tools
-    - go build -> Compiles a bunch of go source code files (Creates an executable file)
-    - go run -> Compiles and executes one or two files
-    - go fmt -> Formats all the code in each file in the current directory
-    - go install -> Compile and "installs" a package
-    - go get -> Downloads the raw source code of someone else's package
-    - go test -> Runs any tests associated with the current project
+    ```
+    go build -> Compiles a bunch of go source code files (Creates an executable file)
+    go run -> Compiles and executes one or two files
+    go fmt -> Formats all the code in each file in the current directory
+    go install -> Compile and "installs" a package
+    go get -> Downloads the raw source code of someone else's package
+    go test -> Runs any tests associated with the current project
+    ```
 - What does 'package main' mean?
   - A package in go is like a project or a workspace.
   - A package is a collection of common source code files.
@@ -148,7 +151,7 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
     - > cards = append(cards, "Six of Spades")
     - the append function takes all the elements from cards slice, appends "Six of Spades" and then returens a modified slice. 
     - So, append does not modify the real slice, it just returns an updated slice, which we then store in the original slice.
-  - Iterating throug slices:
+  - Iterating through slices:
     - > for i, card := range cards {fmt.Println(i, card)}
     - i -> index of the element inside the slice
     - card -> Current card we're iterating over
@@ -156,6 +159,8 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
     - We are using the := operator to declare and intialize i and card, as we are throwing out i and card after each iteration. So, it is not reassigning, rather it is a completely new declaration and initialization.
     - Now, as we know each variable tat is declared in our code must be used, otherwise code will throw error, so if we do not wish to use the index of the slices while iterating over it, we can use '_' instead of 'i'.
       - > for _, card := range cards {fmt.Println(card)}
+  - Also, we can only iterate over the elements over the index in a slice rather than the elements itself:
+    - > for i := range cards {{fmt.Println(i)}}
   - More on Slices:
     - Slices are 0-indexed
     - range in slice:
@@ -164,15 +169,20 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
       - > cards[startIndexIncluding : ] // [startIndexIncluding : len(cards)]
       - This much like list slicing in python.
       - Slicing slices does not modify the real slice.
+    - Length of a slice:
+      - > len(cards)
 - Custom Types in Go:****
   - We can "extend" a base type (string, integer, float, array, map) and add some extra functionality to it.
   - Tell Go we want to create an array of strings and add a bunch of functions specifically made to work with it:
     - > type deck []string{}
-      - deck will extend every type of behavior of a slice of string.
-    - Functions, with 'deck' as a 'receiver' -> A function with a receiver is like a "method" - afunction that belongs to an "instance" So, these custom functions will only work with this 'deck' type.
-    - Now in the codebase we can replace all slice of string with deck to create new instances of deck type if we wished to.
+      - deck will extend every type of behavior of a slice of string or a string slice.
+      - Think of deck as a thin layer or a kind of abstraction, where deck is essectially a string but now we can have particular functions tied to something specifically of type deck.
+    - Functions, with 'deck' as a 'receiver' -> A function with a receiver is like a "method" - a function that belongs to an "instance". So, these custom functions will only work with this 'deck' type or are bound to variables of type "deck".
+      - We should not make all functions bound to our custom type if they are working on them.
+      - Create method (functions with receivers) for our custom type, only if they are acting on the varaible and modifying it.
+    - Now in the codebase we can replace all slice of string or string slice with deck to create new instances of deck type if we wished to.
     - > cards := deck{"Ace of Diamonds", newCard()}
-    - Syntax to add functionality/method with the receiver deck:
+    - Syntax to add functionality/method/Receiver Function with the receiver deck:
       ```
       func (d deck) print() {
         for i, card := range d {
@@ -187,4 +197,94 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
       - Here deck is the receiver to the function print. And it can be defined as d inside the function.
       - As we can see inside the print function, range d, that d refers to the varaible of type "deck" through which this function is called.
       - So, receivers sets up methods on varaibles that we create. Basically associates the methods to varaibles of type "Deck"
-    
+- Write to a File in golang: https://pkg.go.dev/os#WriteFile
+  > func WriteFile(name string, data []byte, perm FileMode) error
+  ```
+  package main
+
+  import (
+    "log"
+    "os"
+  )
+
+  func main() {
+    //0666 permission means that anyone can read or write in the file
+    err := os.WriteFile("testdata/hello", []byte("Hello, Gophers!"), 0666)
+    if err != nil {
+      log.Fatal(err)
+    }
+  }
+  ```
+  - This os.WriteFile(), requires a byte slice as an argument. 
+    - Think of of a string of characters evertime you encounter a byte slice
+    - Each character in the string can be converted to their ascii value and get stored inside a byte slice. (https://asciitable.com)
+      - "Hi there!" (string) -> [72 105 32 116 104 101 114 101 33] (byte slice)
+    - Type Conversion from string to byte slice in Go:
+      - > []byte("Hi there!")//TypeWeWant(ValueWeHave)
+- Read from a File in golang: https://pkg.go.dev/os#ReadFile
+  > func ReadFile(name string) ([]byte, error)
+  ```
+  package main
+
+  import (
+    "log"
+    "os"
+  )
+
+  func main() {
+    data, err := os.ReadFile("testdata/hello")
+    if err != nil {
+      log.Fatal(err)
+    }
+    os.Stdout.Write(data)
+
+  }
+  ```
+  - err -> Value of type 'error'. If nothing went wrong, it will have a value 'nil' (null of golang).
+- As Golang does not have proper error handling as of yet, we can do any one of the below things in case an error occurs.
+  - Log the error and return a default value
+  - Log the error and entirely quit the program
+    > panic(err)
+- Random in Go: https://pkg.go.dev/math/rand
+  - > func Intn(n int) int
+  - This randome number generator is a pseudo-random generator that depends on some seed value.
+  - Think of the seed as some source of randomness inside the number generator.
+  - We take the seed and pass it to the random generator and the generator gived random numbers or values.
+  - The issue here is that the go random generator by default always uses the exact same seed.
+  - So, every time we restart our program and run the random generator, same sequence of random values will get generated as we are using the same exact seed value.
+  - In order to fix this, we need to generate some random seed value and then feed it to the random number generator.
+  ```
+  source := rand.NewSource(time.Now().UnixNano()) //time.Now().UnixNano() this seed value makes sure that the seed passed to the source for rand stays random
+	r := rand.New(source)                           //Creating a new rand with our custom seed
+  newPosition := r.Intn(len(d) - 1) //Our randomly seeded rand is used here
+  ```
+  - But as of Go 1.20, the math/rand package automatically seeds the global random number generator.
+- Easy way to swap elements in Go:
+  - > d[i], d[newPosition] = d[newPosition], d[i]
+- Writing **Tests** in Go:
+  - Go testing is not RSpec, mocha, jasmine, selenium, etc!
+  - To make a test, create a new file ending in _test.go
+    - deck_test.go
+  - To run all tests in a package, run the command:
+    - > go test
+  - We can write Test functions for each individual functions inside a file or we can write a test function for all the closely related functions in the file.
+  - Run all tests in go:
+    > go test
+  - Unlike other languages, Go does not know how many test cases were run inside a function. All Go knows is that we ran a function and either all test cases passed or some/all test cases failed.
+  - Whenever we are testing with go, we need to make sure that we need to manually take care of any cleanup that is needed. Because the Go testing framework will not cleanup for us. 
+    - For example if we open a file and do something, we need to manually cleanup for it ourselves after operations are done. 
+    - The Go testing framework will not detect that we opened a file and did something and automatically clean it up for us.
+    - We need to remember this as if for some reason our test crashes midway and the file is not cleaned up, then the next time we run the test case, we will get unwanted results.
+    - So, we need to manually cleanup the file after the test runs or even if the test crashes mid way.
+- Initaite go module:
+  > go mod init cards
+  - This will initiate a go module called cards and without go module you can not run tests.
+- Formatting:
+  - %T -> Type
+  - %v -> Any value
+- Printing in Go:
+  ```
+  fmt.println() // Adds new line at the end. Does not support formatting like %v and %T
+  fmt.printf("\n") // Need to manually add the new line character. Supports %v and %T
+  ```
+---
