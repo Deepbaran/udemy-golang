@@ -16,6 +16,7 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
 - Any variable that is declared in the code must be used. If we do not want to use it, just use '_' as the variable name.
 - := can only be used when declaring and intializing a varaible for the first time and not for reassigning.
 - There are not try-catch or Error Handling in Golang as of yet.
+- Go by default is pass by value language
 
 ## Questions
 
@@ -28,12 +29,14 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
       - > go run main.go filename.go
   - Go CLI tools
     ```
-    go build -> Compiles a bunch of go source code files (Creates an executable file)
-    go run -> Compiles and executes one or two files
-    go fmt -> Formats all the code in each file in the current directory
-    go install -> Compile and "installs" a package
-    go get -> Downloads the raw source code of someone else's package
-    go test -> Runs any tests associated with the current project
+    go build                    -> Compiles a bunch of go source code files (Creates an executable file)
+    go run main.go file1.go ... -> Compiles and executes one or two files
+    go fmt                      -> Formats all the code in each file in the current directory
+    go install                  -> Compile and "installs" a package
+    go get                      -> Downloads the raw source code of someone else's package
+    go test                     -> Runs any tests associated with the current project
+    go mod init dirname         -> Creates a go module
+    go run .                    -> If module is initialized inside the package, then it will execute all the files in the package. Entrypoint being the main function.
     ```
 - What does 'package main' mean?
   - A package in go is like a project or a workspace.
@@ -51,7 +54,7 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
     - Any other package name other than "main" will create reusable package.
     - "go build" only creates executable file from Executable package. If we ran it for reusable package, nothing will happen.
     - Reusable packages are a good place to define dependencies (helper code)
-    - Anyime we create an Executable package, it MUST have a func called "main".
+    - Anyime we create an Executable package, it MUST have a func called "main". This is the entry point for a program to execute the package.
 - What does 'import "fmt"' mean?
   - This line simply means that give my current code, all of the code and functionality contained within the package called "fmt".
   - "fmt" is a standard library package that is included with go by default.
@@ -113,9 +116,17 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
       - We can use the walrus operator.
       - Here also the go compiler helps to infer the type of the variable.
       - Walrus operator cannot be used to declare and intialize a variable in global scope.
+      - With walrus operator, all three, declaring, initializing and assigning happens in one step.
     - One thing to remember, these two type of declaration does not make our variable dynamic.
     - We can declare and initialize a new variable in this way. But reassigning is not possible. We will need to use '='.
-- If we only declare a variable, we can initialize it in a different line. But for the time, the variable is not initalized, go does not store garbage value in them, rather stores some proper values. Like 0 or int type, empty string for string type, etc.
+- If we only declare a variable, we can initialize it in a different line. But for the time, the variable is not initalized, go does not store garbage value in them, rather stores some proper values. These are also known as zero value.
+  - Zero Value:
+    ```
+    string -> ""
+    int -> 0
+    float -> 0
+    bool -> false
+    ```
 - We can declare variables in global scope and later define them in a function.
 - Functions in Go:
   > func newCard() string {}
@@ -142,7 +153,8 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
     - Array -> fixed length list of things
       - > cards := [4]string{}
       - > cards := [4]string{"1","2","3","4"}
-      - One thing to note here is that even if no element is inserted in the array, this will reserve 4 spaces for the array and we can access them without them having any values assigned. This is not the case with slice.
+      - One thing to note here is that even if no element is inserted in the array, Go will reserve 4 spaces with zero/default values of that type for the array and we can access them without having any values assigned ourselves.
+      - This is not the case with slice.
     - Slice -> An array that can grow or shrink with more functionality
       - > cards := []string{}
       - > cards := []string{"1","2","3","4"}
@@ -191,6 +203,8 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
       }
       ```
         - d -> The actual copy of the deck we're working with is available in the function as a variable called 'd'. d refers to the actual value / actual instance and not a copy of it. [think of d as 'this' equivalent in oops]
+        - One thing to note here, is that d is a pass by value here. So, if we do update it, we are essectially updating a copy of d. We are passing d by value.
+        - To update d itself, we need to pass it by reference with the help of pointers.
         - Every variable of type 'deck' can call this function on itself
           - > cards.print()
         - By convention we name the receiver by 1 or 2 letters that matches the type of the receiver. Hence, d in the case of type deck. Go does not use words like "this" and "self".
@@ -255,10 +269,10 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
   - In order to fix this, we need to generate some random seed value and then feed it to the random number generator.
   ```
   source := rand.NewSource(time.Now().UnixNano()) //time.Now().UnixNano() this seed value makes sure that the seed passed to the source for rand stays random
-	r := rand.New(source)                           //Creating a new rand with our custom seed
-  newPosition := r.Intn(len(d) - 1) //Our randomly seeded rand is used here
+  r := rand.New(source)                           //Creating a new rand with our custom seed
+  newPosition := r.Intn(len(d) - 1)               //Our randomly seeded rand is used here
   ```
-  - But as of Go 1.20, the math/rand package automatically seeds the global random number generator.
+  - But as of Go 1.20, the math/rand package automatically seeds the global random number generator. So, no need for seeding from our side.
 - Easy way to swap elements in Go:
   - > d[i], d[newPosition] = d[newPosition], d[i]
 - Writing **Tests** in Go:
@@ -282,9 +296,145 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
 - Formatting:
   - %T -> Type
   - %v -> Any value
+  - %+v -> prints out all the properties in a struct
 - Printing in Go:
   ```
   fmt.println() // Adds new line at the end. Does not support formatting like %v and %T
-  fmt.printf("\n") // Need to manually add the new line character. Supports %v and %T
+  fmt.printf("\n") // Need to manually add the new line character. Supports formatting like %v and %T
   ```
+---
+### 3. struct
+- Struct (Structure): It is a Data Structure. It is a Collection of different properties that are related together.
+- Defining, Declaring and Initializing struct:
+  ```
+  package main
+
+  import "fmt"
+
+  //Defining custom struct type person
+  type person struct {
+    //properties of the struct
+    firstName string
+    lastName  string
+  }
+
+  func main() {
+    //Declaring struct
+
+    //1st way
+    // alex := person{"Alex", "Anderson"} //Go assigns values in the order of definition
+    // fmt.Println(alex)                  //{Alex Anderson}
+
+    //2nd way
+    // alex := person{firstName: "Alex", lastName: "Anderson"} //assigning values directly to the properties without depending on the order of definition
+    // fmt.Println(alex)                                       //{Alex Anderson}
+
+    //3rd way [Declaring a struct and then updating values individually]
+    var alex person
+    fmt.Printf("%+v\n", alex) //{firstName: lastName:}
+    fmt.Println(alex)         //{ } <- Two empty strings (filled automatically with default/zero value)
+    alex.firstName = "Alex"
+    fmt.Println(alex) //{Alex } <- Alex with one empty string for lastName
+    alex.lastName = "Anderson"
+    fmt.Println(alex) //{Alex Anderson}
+  }
+  ```
+- Embedding one struct in another:
+  ```
+  package main
+
+  import "fmt"
+
+  type contactInfo struct {
+    email   string
+    pinCode int
+  }
+  
+  type person struct {
+    //properties of the struct
+    firstName string
+    lastName  string
+    //Embedding a strucu inside another struct
+    // contact contactInfo
+    contactInfo //If we name the property same as it's type, we do not need to specify it's type as the type will get inferred
+  }
+
+  func main() {
+    //Declaring struct with an embedded struct
+    // jim := person{
+    // 	firstName: "Jim",
+    // 	lastName:  "Party",
+    // 	contact: contactInfo{
+    // 		email:   "abc@email.com",
+    // 		pinCode: 000000,
+    // 	},
+    // }
+    // fmt.Println(jim)         //{Jim Party {abc@email.com 0}}
+    // fmt.Printf("%+v\n", jim) //{firstName:Jim lastName:Party contact:{email:abc@email.com pinCode:0}}
+
+    //Declaring struct with an embedded struct
+    jim := person{
+      firstName: "Jim",
+      lastName:  "Party",
+      contactInfo: contactInfo{
+        email:   "abc@email.com",
+        pinCode: 000000,
+      },
+    }
+    fmt.Println(jim)         //{Jim Party {abc@email.com 0}}
+    fmt.Printf("%+v\n", jim) //{firstName:Jim lastName:Party contactInfo:{email:abc@email.com pinCode:0}}
+    }
+  ```
+- Struct with receiver function:
+  ```
+  package main
+
+  import "fmt"
+
+  type contactInfo struct {
+    email   string
+    pinCode int
+  }
+
+  // Defining custom struct type person
+  type person struct {
+    //properties of the struct
+    firstName string
+    lastName  string
+    //Embedding a strucu inside another struct\
+    contactInfo
+  }
+
+  func main() {
+    jim := person{
+      firstName: "Jim",
+      lastName:  "Party",
+      contactInfo: contactInfo{
+        email:   "abc@email.com",
+        pinCode: 000000,
+      },
+    }
+    jim.print()              //{firstName:Jim lastName:Party contactInfo:{email:abc@email.com pinCode:0}}
+  }
+
+  func (p person) print() {
+    fmt.Printf("%+v\n", p)
+  }
+  ```
+- Go by default is pass by value language
+  - Meaning, when we pass a variable to a function, that variable is copied with all of it's value(s) to a new memory address and then that is passed.
+  - So, if we make any updates in the variable inside the function, it will not be affecting the real variable.
+- For receiver functions, by default we pass the varaible by value (pass by value). So, if we update something in the variable, it does not update the real variable, rather updates a copy of that variable (which belongs solely to the function itself).
+  - To update the varaible that is passed in the receiver function we need to "pass by reference" with the help of pointers.
+  - Example of pass by value to receiver function:
+    ```
+    func (p person) updateName(newFirstName string) {
+      //Here the firsName of the original p will not be updated as we are passing it by value
+      p.firstName = newFirstName
+    }
+    ```
+  - Each variable is stored somewhere in the memory address in RAM.
+  - Pointers points to the memory address (In RAM) where the variable is stored.
+    - \* -> Helps to point to the memory address where variables are stored (Essentially stores the variable's memory address)
+    - & -> returns the memory address where the variable is stored
 ---
