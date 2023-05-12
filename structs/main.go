@@ -50,6 +50,34 @@ func main() {
 	// fmt.Printf("%+v\n", jim) //{firstName:Jim lastName:Party contact:{email:abc@email.com pinCode:0}}
 
 	//Declaring struct with an embedded struct
+	// jim := person{
+	// 	firstName: "Jim",
+	// 	lastName:  "Party",
+	// 	contactInfo: contactInfo{
+	// 		email:   "abc@email.com",
+	// 		pinCode: 000000,
+	// 	},
+	// }
+	// fmt.Println(jim)         //{Jim Party {abc@email.com 0}}
+	// fmt.Printf("%+v\n", jim) //{firstName:Jim lastName:Party contactInfo:{email:abc@email.com pinCode:0}}
+	// jim.updateName("Jimmy")
+	// jim.print() //{firstName:Jim lastName:Party contactInfo:{email:abc@email.com pinCode:0}}
+
+	//Declaring struct with an embedded struct
+	// jim := person{
+	// 	firstName: "Jim",
+	// 	lastName:  "Party",
+	// 	contactInfo: contactInfo{
+	// 		email:   "abc@email.com",
+	// 		pinCode: 000000,
+	// 	},
+	// }
+	// //jimPointer is a pointer of type person holding the memory address were jim struct is located
+	// //&jim returns a pointer/memory address where the real jim struct copy is stored and assigns it to a pointer
+	// jimPointer := &jim //var jimPointer *person = &jim
+	// jimPointer.updateName("Jimmy")
+	// jim.print() //{firstName:Jimmy lastName:Party contactInfo:{email:abc@email.com pinCode:0}}
+
 	jim := person{
 		firstName: "Jim",
 		lastName:  "Party",
@@ -58,14 +86,16 @@ func main() {
 			pinCode: 000000,
 		},
 	}
-	fmt.Println(jim)         //{Jim Party {abc@email.com 0}}
-	fmt.Printf("%+v\n", jim) //{firstName:Jim lastName:Party contactInfo:{email:abc@email.com pinCode:0}}
-	jim.updateName("Jimmy")
-	jim.print() //{firstName:Jim lastName:Party contactInfo:{email:abc@email.com pinCode:0}}
+	jim.updateName("Jimmy") //This works
+	jim.print()             //{firstName:Jimmy lastName:Party contactInfo:{email:abc@email.com pinCode:0}}
 }
 
-func (p person) updateName(newFirstName string) {
-	p.firstName = newFirstName
+//This receiver can be called with any pointer to person. Not a person itself.
+func (pointerToPerson *person) updateName(newFirstName string) {
+	//pointerToPerson is holding the memory address where the person struct is stored and is of type person pointer
+	//pointerToPerson refers to the original copy of the person struct in memory through which this receiver function is called
+	//pointerToPerson is the pointer and *pointerToPerson is the value that the pointer is pointing to
+	(*pointerToPerson).firstName = newFirstName
 }
 
 func (p person) print() {

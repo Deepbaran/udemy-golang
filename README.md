@@ -10,7 +10,9 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
 
 - Golang is a Compiled language.
 - Golang is a statically typed language.
-- Go is not a Object Oriented Programming Language.
+- Go is not a Object Oriented Programming Language. It is a procedural Language
+- Varaible Declaration is Golang:
+  > variableName variableType // myNum int32
 - To run it on our local computer we need the Go Runtime which allows us to build and execute Go programs.
 - Everything (almost) in go is a Type.
 - Any variable that is declared in the code must be used. If we do not want to use it, just use '_' as the variable name.
@@ -437,4 +439,162 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
   - Pointers points to the memory address (In RAM) where the variable is stored.
     - \* -> Helps to point to the memory address where variables are stored (Essentially stores the variable's memory address)
     - & -> returns the memory address where the variable is stored
+- Updating value of a structure, inside receiver function by using pass by reference through Pointers.
+  ```
+  package main
+
+  import "fmt"
+
+  type contactInfo struct {
+    email   string
+    pinCode int
+  }
+
+  // Defining custom struct type person
+  type person struct {
+    //properties of the struct
+    firstName string
+    lastName  string
+    contactInfo
+  }
+
+  func main() {
+    jim := person{
+      firstName: "Jim",
+      lastName:  "Party",
+      contactInfo: contactInfo{
+        email:   "abc@email.com",
+        pinCode: 000000,    
+      },
+    }
+
+    //jimPointer is a pointer of type person holding the memory address were jim struct is located
+    //&jim returns a pointer/memory address where the real jim struct copy is stored and assigns it to a pointer
+    jimPointer := &jim //var jimPointer *person = &jim 
+    jimPointer.updateName("Jimmy")
+    jim.print() //{firstName:Jimmy lastName:Party contactInfo:{email:abc@email.com pinCode:0}}
+  }
+
+  //This receiver can be called with any pointer to person. Not a person itself.
+  func (pointerToPerson *person) updateName(newFirstName string) {
+    //pointerToPerson is holding the memory address where the person struct is stored and is of type person pointer
+    //pointerToPerson refers to the original copy of the person struct in memory through which this receiver function is called
+    //pointerToPerson is the pointer and *pointerToPerson is the value that the pointer is pointing to
+    (*pointerToPerson).firstName = newFirstName
+  }
+
+  func (p person) print() {
+    fmt.Printf("%+v\n", p)
+  }
+  ```
+  - &variable -> Give me the memory address of the value this varaible is pointing at
+  - *pointer -> Give me the value this memory address is pointing at (Dreferencing).
+  - In the updateName receiver function:
+    - *person -> This is a type description - it means we're working with a pointer to a person
+    - *pointerToPerson -> This is an operator - it means we want to manipulate the value the pointer is referencing
+  - To summarze, pointers are nothing more than memory address. &variables returns the memory address where the variable is tored and pointer stores it to use the original copy later. *pointer helps in accessig the original variable that is stored inside the memory where the pointer is pointing to or storing.
+    - **address** | **value**
+      - Turn **address**/**pointer** into **value** with ***address**
+      - Turn **value** into **address**/**pointer** with **&value**
+    - > variableName *variable //*variable is a pointer type
+    - > *variableName //*variableName is dereferencing/accessing the variable that is stored in variableName memory address
+- We can convert the above code with the below shortcut:
+  ```
+  package main
+
+  import "fmt"
+
+  type contactInfo struct {
+    email   string
+    pinCode int
+  }
+
+  // Defining custom struct type person
+  type person struct {
+    //properties of the struct
+    firstName string
+    lastName  string
+    contactInfo
+  }
+
+  func main() {
+    jim := person{
+      firstName: "Jim",
+      lastName:  "Party",
+      contactInfo: contactInfo{
+        email:   "abc@email.com",
+        pinCode: 000000,
+      },
+    }
+    jim.updateName("Jimmy") //This works
+    jim.print() //{firstName:Jimmy lastName:Party contactInfo:{email:abc@email.com pinCode:0}}
+  }
+
+  func (pointerToPerson *person) updateName(newFirstName string) {
+    (*pointerToPerson).firstName = newFirstName
+  }
+
+  func (p person) print() {
+    fmt.Printf("%+v\n", p)
+  }
+  ```
+  - This code works because in Go, we can call a receiver function that is bounded to a pointer type (*person), either with the same pointer type(*person) or with the root type(person). Go will automatically convert the root type to a pointer type for us while calling the receiver function. So, no need for us to explicitly get the pointer type for calling the receiver function, Go will implicitly do it for us.
+    - But the opposite is not allowed in Go. That is, we can not call a receiver function that is bounded to a root type(person) using a pointer type(*person)
+- **Gotchas** in pointer:
+  - When you see a * operator in front of a pointer, it turn the pointer into a value.
+  - Go is by default a Pass by Value language. So, if we pass any variable as a argument or as a receiver, that variable is copied in memory and then that copy is sent to the function. So, the function by default will always be working on a copy of our data structure.
+    - We can address this problem by modifying the underlying Data Structure through the use of pointers and memory addresses.
+    - Even pointers are copied when they are passed to the function directly. So, even though both will be pointing towards the same memory address, but they themselves will be stored in different memory addressed.
+  - In case of **slice**, Go does not create a copy of it while passing it to a function. Rather it passes the reference to it.
+    ```
+    package main
+
+    import "fmt"
+
+    func main() {
+      mySlice := []string{"Hi", "There", "How", "Are", "You"}
+
+      updateSlice(mySlice)
+
+      fmt.Println(mySlice) //[Bye There How Are You]
+    }
+
+    func updateSlice(s []string) {
+      s[0] = "Bye"
+    }
+    ```
+      - To understand the above scenario, we first need to understand the difference between an Array and a Slice.
+        - Arrays:
+          - Primitive Data Structure
+          - Can't be resized
+          - Rarely used directly
+        - Slices:
+          - Can grow and shrink
+          - Used 99% of the time for lists of elements
+      - When we create a slice, Go creates two separate data structures for us. The first is a slice and the second is an array.
+        - slice is a data structure that has 3 elements in it.
+          - A pointer, pointing to the head of the underlying array that represents the actual list of items.
+          - A capacity number representing how many items the slice can contain at this time.  
+          - A length number representing number of elements currently existing inside a slice.
+        - The Slice and the array are stored at different paces in the memory.
+      - Now the mySlice in the example above is not actually referring to the underlying array. Rather it is pointing to the Slice data structure.
+      - So, when we call a function and pass a slice to it, Go behaves as a Pass by value language and copies the original slice to another memory address and then sends copy to the function.
+      - Now, the difference here that is not the case for other types is that, even though the slice got copied, the underlying array that both the original and the copied slice are pointing to are same. 
+      - This is possible only because, the underlying array is stored in a different memory address.
+      - So, when we update any value/modify the underlying array in the copied slice, it is ultimately updating the value of the original underlying array and hence updating the original slice.
+  - Now, slices arenot the only types in Go that behaves like this. There are other types like this. We call them Reference Types. Because they are referenceing to another data structure in memory (underlying true source of data).
+    - So, in case of these Reference Types, we can create copied of them, but at the end of they day, they will still be pointing towards the same true source of data.
+  - Value Types vs Reference Types:
+    - Value Types [Use pointers to change these things in a function]
+      - int
+      - float
+      - string
+      - bool
+      - struct
+    - Reference Type [Don't worry about pointers with these]
+      - slices
+      - maps
+      - channels
+      - pointers
+      - functions
 ---
