@@ -598,3 +598,73 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
       - pointers
       - functions
 ---
+### 4. map
+- map is a collection of key-value pairs. [Like Dictionaries in Python]
+- Both keys and values are statically typed. All keys must be of same type, all values must be same type, keys and values need not be of same type.
+- Basic map declaration and adding values:
+  ```
+  package main
+
+  import "fmt"
+
+  func main() {
+    // colors := map[string]string{
+    // 	"red":   "#ff0000",
+    // 	"green": "#4bf745",
+    // }
+    // fmt.Println(colors) //map[green:#4bf745 red:#ff0000]
+
+    // var colors map[string]string //Empty map to be filled later
+    // fmt.Println(colors) //map[]
+
+    colors := make(map[string]string) //Create an empty map using make function
+    fmt.Println(colors)               //map[]
+    colors["white"] = "#ffffff"
+    fmt.Println(colors) //map[white:#ffffff]
+  ```
+- Delete elements in a map:
+  ```
+	colors := make(map[int]string)
+	colors[10] = "#ffffff"
+	delete(colors, 10)
+	fmt.Println(colors) //map[]
+  ```
+- Iterating over a map:
+  ```
+  colors := map[string]string{
+		"red":   "#ff0000",
+		"green": "#4bf745",
+		"white": "#ffffff",
+	}
+
+  for color, hex := range colors {
+		fmt.Println("Hex code for ", color, " is ", hex)
+	}
+	/*
+		Hex code for  red  is  #ff0000
+		Hex code for  green  is  #4bf745
+		Hex code for  white  is  #ffffff
+	*/
+  ```
+- Maps vs Structs
+  - Map:
+    - All keys must be the same type
+    - Use to represent a collection of related properties
+    - All values must be the same type
+    - Don't need to know all the keys at compile time
+    - Keys are indexed - we can iterate over them
+    - Reference Type!
+  - Struct:
+    - Values can be of different type
+    - You need to know all the different fields at compile time
+    - Keys don't support indexing - we can't iterate over them
+    - Use to represent a "thing" with a lot of different properites
+    - Value Type!
+---
+### 5. interfaces
+
+---
+### 6. http
+
+---
+### 7. channels
