@@ -797,11 +797,83 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
 - Extra Notes:
   - Interfaces are **not** generic types => Other languages have 'generic' types - go does not. (From v1.18, go also has generics - [Link](https://go.dev/blog/intro-generics))
   - Interfaces are 'implicit' => We don't manually have to say that our custom type satisfies some interface.
-  - Interfaces are a contracct to help us manage types => GARBAGE IN -> GARBAGE OUT. If our custom type's implementation of a function is broken then interfaces won't help us.
+  - Interfaces are a contracct to help us manage types => GARBAGE IN -> GARBAGE OUT. If our custom type's implementation of a function is broken then interfaces won't help us. It means that we can write functions that help types to implement interfaces in an incorrect fashion. So, we need to remember, interfaces are lose suggestions to just help us figure out what functions and types match up where and not help us to write the correct code (Interfaces are there to help with types and not with logic). But if we put together a wrong implementation, everything will still going to compile and run but we will not get our intended output.
   - Interfaces are tough. Step #1 is understanding how to read them => Understand how to read interfaces in the standard lib. Writing your own interfaces is tough and requires experience. 
 - Interfaces are not necessary in Go code. But they are good fo code quality.
 ---
 ### 6. http
+- Structure of Response struct - [Link](https://pkg.go.dev/net/http#Response):
+  - ![](http1.PNG)
+  - The io.ReadCloser interface was specified as a value inside the Response struct. This means that the Body filed inside the Response struct can have any value assigned to it, as long as it fulfills the interface.
+  - All we have to do is drill through the documentation and eventually find that we need to define a function called Read and one called Close.
+  - So, if we made some kind of struct that had a function called Read and one called Close and obeyed all the types defined, we can then easily create a Response struct and assign it to the Body field.
+  - Now lets discuss the below interface syntax - [Link](https://pkg.go.dev/io#ReadCloser):
+    ```
+    type ReadCloser interface {
+      Reader
+      Closer
+    }
+    ```
+    - Reader and Closer are themselves interfaces.
+    - In Go, we can use different interfaces and assemble them together to form another interface. So, we can embed different interfaces inside one interface.
+    - So, to fulfill the ReadCloser interface, the struct first needs to satisfy both Reader and Closer interfaces first. 
+    - So, in reality, what truly matters in ReadCloser interface is, what Reader and Closer interface is rquiring of us.
+  - If we did not use interfaces to get the body of a Response, then we would need to have different functions to get different type of responses, as they will have different types in their argument list. As shown by the below diagram: 
+    - ![](http2.PNG)
+  - To not write different functions that essentially do the same thing just because of them having different argument types, we are using interfaces (that Reader interface).
+  - Imagine the Reader interface to work something like the below image:
+    - ![](http3.PNG)
+  - So think of the Reader interface as some kind of interface or adapter that takes inputs from sources that satisfies the Reader interface and convert it to a medium that is easier to work with (byte slice).
+  - Now, the Reader interface requires us to define a function called Read ([Link](https://pkg.go.dev/io#Reader)) for any struct to satisfy as a Reader interface type.
+  - A more realistic diagram of what the Reader interface is doing is given below:
+    - ![](http4.PNG)
+    - Here we are saying that every single source of input that will be coming in to our application, will implement the Reader inerface.
+    - So, the Request Body has already implemented the Read functon that is described inside the Reader interface.
+  - Below is a diagram that shows what exactly the Read function inside the Reader interface does.
+    - ![](http5.PNG)
+    - So, we send a byte slice to the Read function.
+    - The Read function injects the Raw body of response into the byte slice.
+    - As values, inside slices can be modified inside another function, now the byte slice that we has sent to Read function has the response in it.
+- Getting the source code of a wesite:
+  - ![](http6.PNG)
+  - Using the Reader interface:
+    ```
+    bs := make([]byte, 99999)
+    resp.Body.Read(bs)
+    fmt.Println(string(bs))
+    ```
+    - Take some data and import it in our application.
+  - Using the Writer interface:
+    ```
+    io.Copy(os.Stdout, resp.Body)
+    ```
+    - Takes some data and outputs is some sort of channel/output/method of output.
+    - So, the Writer interface does the below thing:
+      - ![](http7.PNG)
+      - The Writer interface is inside the io package [Link](https://pkg.go.dev/io#Reader).
+    - io.Copy [Link](https://pkg.go.dev/io#Copy)
+      - This function expects two arguments:
+        - First, some value that implements the Write function inside the Writer interface (os.Stdout).
+        - Second, some value that implements the Read function inside the Reader interface (resp.Body).
+      - So, we can think that the Copy function reads something from somewhere outside from our application and writes it inside some outside channel.
+      - Below is the description of io.Copy:
+        - ![](http8.PNG)
+    - Flow of io.Copy:
+      - ![](http9.PNG)
+  - With the help of interfaces, we can write some of our own custom implementations of he built in package functions.
+    - For example. Below is a custom implementation of the Write function inside the Writer interface.
+      ```
+      type logWriter struct{}
 
+      func (logWriter) Write(bs []byte) (int, error) {
+        //Writer interface logic
+        fmt.Println(string(bs))
+
+        //Custom implementation of the Writer interface
+        fmt.Println("Just wrote this many bytes: ", len(bs))
+
+        return len(bs), nil //The integer should be the number if bytes written in the byte slice that was processed [0 <= n <= len(bs)]
+      }
+      ```
 ---
 ### 7. channels
