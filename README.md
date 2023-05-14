@@ -800,10 +800,11 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
   - Interfaces are a contracct to help us manage types => GARBAGE IN -> GARBAGE OUT. If our custom type's implementation of a function is broken then interfaces won't help us. It means that we can write functions that help types to implement interfaces in an incorrect fashion. So, we need to remember, interfaces are lose suggestions to just help us figure out what functions and types match up where and not help us to write the correct code (Interfaces are there to help with types and not with logic). But if we put together a wrong implementation, everything will still going to compile and run but we will not get our intended output.
   - Interfaces are tough. Step #1 is understanding how to read them => Understand how to read interfaces in the standard lib. Writing your own interfaces is tough and requires experience. 
 - Interfaces are not necessary in Go code. But they are good fo code quality.
+- A struct or variable can satisfy more than one interface type.
 ---
 ### 6. http
 - Structure of Response struct - [Link](https://pkg.go.dev/net/http#Response):
-  - ![](http1.PNG)
+  - ![](imgs/http1.PNG)
   - The io.ReadCloser interface was specified as a value inside the Response struct. This means that the Body filed inside the Response struct can have any value assigned to it, as long as it fulfills the interface.
   - All we have to do is drill through the documentation and eventually find that we need to define a function called Read and one called Close.
   - So, if we made some kind of struct that had a function called Read and one called Close and obeyed all the types defined, we can then easily create a Response struct and assign it to the Body field.
@@ -819,23 +820,23 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
     - So, to fulfill the ReadCloser interface, the struct first needs to satisfy both Reader and Closer interfaces first. 
     - So, in reality, what truly matters in ReadCloser interface is, what Reader and Closer interface is rquiring of us.
   - If we did not use interfaces to get the body of a Response, then we would need to have different functions to get different type of responses, as they will have different types in their argument list. As shown by the below diagram: 
-    - ![](http2.PNG)
+    - ![](imgs/http2.PNG)
   - To not write different functions that essentially do the same thing just because of them having different argument types, we are using interfaces (that Reader interface).
   - Imagine the Reader interface to work something like the below image:
-    - ![](http3.PNG)
+    - ![](imgs/http3.PNG)
   - So think of the Reader interface as some kind of interface or adapter that takes inputs from sources that satisfies the Reader interface and convert it to a medium that is easier to work with (byte slice).
   - Now, the Reader interface requires us to define a function called Read ([Link](https://pkg.go.dev/io#Reader)) for any struct to satisfy as a Reader interface type.
   - A more realistic diagram of what the Reader interface is doing is given below:
-    - ![](http4.PNG)
+    - ![](imgs/http4.PNG)
     - Here we are saying that every single source of input that will be coming in to our application, will implement the Reader inerface.
     - So, the Request Body has already implemented the Read functon that is described inside the Reader interface.
   - Below is a diagram that shows what exactly the Read function inside the Reader interface does.
-    - ![](http5.PNG)
+    - ![](imgs/http5.PNG)
     - So, we send a byte slice to the Read function.
     - The Read function injects the Raw body of response into the byte slice.
     - As values, inside slices can be modified inside another function, now the byte slice that we has sent to Read function has the response in it.
 - Getting the source code of a wesite:
-  - ![](http6.PNG)
+  - ![](imgs/http6.PNG)
   - Using the Reader interface:
     ```
     bs := make([]byte, 99999)
@@ -849,7 +850,7 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
     ```
     - Takes some data and outputs is some sort of channel/output/method of output.
     - So, the Writer interface does the below thing:
-      - ![](http7.PNG)
+      - ![](imgs/http7.PNG)
       - The Writer interface is inside the io package [Link](https://pkg.go.dev/io#Reader).
     - io.Copy [Link](https://pkg.go.dev/io#Copy)
       - This function expects two arguments:
@@ -857,9 +858,9 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
         - Second, some value that implements the Read function inside the Reader interface (resp.Body).
       - So, we can think that the Copy function reads something from somewhere outside from our application and writes it inside some outside channel.
       - Below is the description of io.Copy:
-        - ![](http8.PNG)
+        - ![](imgs/http8.PNG)
     - Flow of io.Copy:
-      - ![](http9.PNG)
+      - ![](imgs/http9.PNG)
   - With the help of interfaces, we can write some of our own custom implementations of he built in package functions.
     - For example. Below is a custom implementation of the Write function inside the Writer interface.
       ```
@@ -877,3 +878,140 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
       ```
 ---
 ### 7. channels
+- A good read for Golang concurrency - [Link](https://gochronicles.com/concurrency-in-go/)
+- Channels and Coroutines are both structures in Go that are used to handle concurrent programming.
+- Go Routine:
+  - Think of Go routines as a separate line of code execution that can be used to handle blocking code.
+  - ![](imgs/channels1.PNG)
+  - When we launch a Go program (compile and execute it), we automatically create one Go Routine. 
+  - Think of Go Routine as something that exists inside our program/process.
+  - Go Routine takes every single line in our program and executes them one by one.
+  - A Go routines is a lightweight thread managed by the Go runtime.
+  - **Remember though, a goroutine is not the same as a OS thread.**
+  - Golang follows Concurrency paradigm.
+    - Suppose our CPU has 4 processors and we have 15 go routines.
+    - Then 4 routines will get assigned to 4 processors and start executing in parallel.
+    - Once one of the routines face some blocking code (io or something else), it will leave the processor free and wait for the blocking code to complete.
+    - In the meantime, some other go routine will occupy the free processor and start executing. This is kind of asynchronous.
+  - Syntax for Go routine:
+    - > go checkLink(link)
+      - go -> Create a new thread go routine. We only use the go keywords infront of function calls.
+      - checkLink(link) -> Run this function with the newly created go routine
+  - What happens when we spawn multipe Go routines inside of our program:
+    - With One CPU
+      - ![](imgs/channels2.PNG)
+      - Go scheduler works with one CPU on our local machine.
+      - So, even if we have dual or quad or more core machine, by default Go will attempt to use onluy one CPU.
+      - With one CPU, each Go Routine runs asynchronously on that one CPU.
+      - Go scheduler schedules and detects when to let a Go routine use that CPU for execution or when a Go routine is blocked and some other Go routine needs to scheduled to the CPU, respectively.
+      - So, as soon as the running Go routine is blocked, Go scheduler pauses it and starts executing the next Go routine. In this way, the code remains **non-blocking**.
+      - If the running Go routine is not blocked then the next Go routine starts running after the previous Go routine's complete execution with the help of the Go scheduler.
+      - With One CPU, Go routines are not actually running parallelly. Rather they are running asynchronously with the help of Go Scheduler.
+    - Multi Core [By default Go tries to use one core! But we can overwrite that setting and make it use multiple cores!]
+      - ![](imgs/channels3.PNG)
+      - Now, each CPU core will run one Go routine parallelly.
+      - Go scheduler assigns Go routines to each CPU core.
+      - Again even with Multiple cores, Go schedulers still make the Go routines run asynchronously.
+  - Concurrency is not Parallellism.
+    - Concurrency
+      - ![](imgs/channels4.PNG)
+      - We can load multipe Go routines in our program but cannot run all of them at the same time.
+      - We can schedule Go routines to run. Meaning, we do not need to necessarily wait for one Go routine to finish before moving to the next one.
+    - Parallellism
+      - ![](imgs/channels5.PNG)
+      - We get parallellism only when we start adding multiple CPU cores on our machine.
+  - Go Routines:
+    - ![](imgs/channels6.PNG)
+    - Main routine is the default routine.
+    - Child routines are not given same priority as the Main routine.
+    - The Main Routine is the single routine, that determines when our program exits or ends. Once Main routine ends or exits, the whole program exits.
+      - ![](imgs/channels7.PNG)
+    - The Main routine creates Chold routines inside of our programs and goes ahead and executes other code in the program and once it reaches the end, it ends the program, without checking if he child routines completed their execution or not.
+    - To make sure, Main routine, does not exit before all the go routines complete their execution, child routines need to inform Main routine of their completion. 
+    - For communication between two routines we use **Channels**.
+- Channels:
+  - Channels are used to communicate in between different running Go routines.
+  - For a code to successfully exit, channel needs to be empty.
+    - If we sent some value inside the channel but noone received it, then the code will not exit as channel still has message in it.
+  - We are going to use Channels to make Main routine aware when each of the Child Go routines have completed their code.
+  - So, we need to make one channel, which will communicate between all of the go routines in our program.
+  - Channels are the **ONLY** way we have to communicate between the go routines.
+  - ![](imgs/channels8.PNG)
+  - Channel kind of intermediates discussion or communication between all the running routines.
+  - Think of channel as some kind of chat application. Where running routines can send some message and it will be sent to any other running routine that has access to that channel.
+  - Channels are treated as any other value inside of Go.
+  - Channels are essenctially created in a same way as we create a struct, slice, int, etc.
+  - Channels are actual values that we can pass around. In this case, we will pass around the channels between the different Go routines.
+  - Channels are  **typed**. Just like every other variable. The type indicates the information type or the type of the data that we pass inside the channel and share between the different routines.
+  - So, the data that is passed between all the routines through the channel must be of the same type.
+  - ![](imgs/channels9.PNG)
+  - So, when we create a channel, we create a channel that is meant for sharing a specific type of data throughout our application.
+  - Syntax to create a chabbel that communicates using type string:
+    - > c := make(chan string)
+  - Sending data with Channels:
+    - ![](imgs/channels10.PNG)
+    - ![](imgs/channels11.PNG)
+      - We can send value from our Main routine to Child routine and vice versa using channels.
+  - Below is the diagram that shows what is happening with our code inside [channels/main.go](https://github.com/Deepbaran/udemy-golang/blob/master/channels/main.go) directory.
+    - ![](imgs/channels12.PNG)
+    - ![](imgs/channels13.PNG)
+    - Below diagram can help in understanding what is happening when we use repeating routines (where we continually ping the sites over and over again):
+      - ![](imgs/channels14.PNG)
+      - As soon as the routine that fetches google.com, as soon as it completes execution, we want it to fetch google.com immediately again.
+      - So, anytime a request completes, we want one to start right back up.
+    - Syntax to pause a go routine:
+      - > time.Sleep(5 * time.Second)
+      - This pauses the current coroutine where it is used to sleep/pause for 5 seconds.
+      - It is also a blocking code.
+      - Put the sleep statement inside the coroutine that we are panning to pause.
+      - Making the Main coroutine pause is not a good idea and we should keep it always awake to receive messages all the time.
+      - Add the pause statements inside the child routines.
+      - Better to add it before sending message to the channel.
+      - Best to use it with function literal.
+    - Diagram of the code execution with pause:
+      - ![](imgs/channels15.PNG)
+    - Pause/Sleep with function literal.
+      ```
+      fl := func() {
+        time.Sleep(5 * time.Second)
+        checkLink(l, c)
+		  }
+		  go fl()
+      ```
+      ```
+      go func() {
+        time.Sleep(5 * time.Second)
+        checkLink(l, c)
+      }()
+      ```
+    - From the above Function Literal, we will get the below warning:
+      - > loop variable l captured by func literal
+    - Below is the diagram to undearstand the warning:
+      - ![](imgs/channels16.PNG)
+      - Whenever we receive a value from our channel, we assign it to the variable l in the for loop in our code.
+      - So, we can say that the varaible l inside the Main routine is pointing towards some location in the memory that holds the link that we need to fetch.
+      - Now, the l variable that we are passing inside the checkLink function inside the function literal is defined in the outer scope of the Function Literal.
+      - The Function Literal is getting executed in a new child go routine.
+      - This means that the l variable inside the child rotine is also pointing towards the same memory address as the Main routine and getting the same link.
+      - Now, as we continue to loop through the variable l, and start to receive messages from the channel, we are constantly changing the value that is assigned to l.
+      - So, sometimes l will be google.com and sometimes after we receive the message, it will get a new value inserted to the memory address where l is stored, like stackoverflow.com or facebook.com
+      - And every time the Main and Child routine are referencing the same location in memory.
+      - That's why we are seeing the warning message. It is saying that the variable l inside the child routine is still looking at the variable in the outer scope (Main routine) which might be a completely new value and might be getting changed over time.
+      - So, at first we may have did the Get request with the correct value of link, but after the request is actually resolved, the link might have been changed by the time we get to the lines where we are sending messages/links to the channels.
+      - So, we are getting this warning because l inside the child routine is referencing the outer socpe of the function literal. So, we are referencing a varaibale inside a routine, that is being maintained by another go routine.
+      - So, in practice, we **NEVER EVER** attampt to use the same variable inside two different routines.
+      - Instead we depend on the fact that Go is a Pass by Value language.
+      - So, whenever we want to pass some data from the Main routine to the Child routine, when it is created, we are going to make sure that we pass all of that information as an argument to the function that composes the Child routine.
+      - Because we will pass it as an argument, it's value will be copied in memory.
+      - ![](imgs/channels17.PNG)
+      - Now that the Child routine received a copy of the link, Child routine will have a very stable record of link it is attempting to fetch and Main routine can continue to change the address as much as it pleases as it received new values through the channel, without altering the Child routine. Child routine will keep looking at it's original value.
+      - ![](imgs/channels18.PNG)
+      - Updated Function Literal:
+        ```
+        go func(link string) {
+          time.Sleep(5 * time.Second)
+          checkLink(link, c)
+        }(l)
+        ```
+      - We **NEVER EVER** access the same variable inside two different routines. We either pass the variable as an argument from Main routine to Child routine or we pass it using channel. We never try to share variables betweenn them.
+---
