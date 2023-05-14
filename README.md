@@ -19,6 +19,7 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
 - := can only be used when declaring and intializing a varaible for the first time and not for reassigning.
 - There are not try-catch or Error Handling in Golang as of yet.
 - Go by default is pass by value language
+- Go does not support overloading. So we cannot have two functions having same name even if their arguments are different. Unless they are reveiver functions and are bounded to different types.
 
 ## Questions
 
@@ -194,6 +195,7 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
     - Functions, with 'deck' as a 'receiver' -> A function with a receiver is like a "method" - a function that belongs to an "instance". So, these custom functions will only work with this 'deck' type or are bound to variables of type "deck".
       - We should not make all functions bound to our custom type if they are working on them.
       - Create method (functions with receivers) for our custom type, only if they are acting on the varaible and modifying it.
+      - A receiver receives both the arguments as well as the variable on which it is getting called.
     - Now in the codebase we can replace all slice of string or string slice with deck to create new instances of deck type if we wished to.
     - > cards := deck{"Ace of Diamonds", newCard()}
     - Syntax to add functionality/method/Receiver Function with the receiver deck:
@@ -213,6 +215,13 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
       - Here deck is the receiver to the function print. And it can be defined as d inside the function.
       - As we can see inside the print function, range d, that d refers to the varaible of type "deck" through which this function is called.
       - So, receivers sets up methods on varaibles that we create. Basically associates the methods to varaibles of type "Deck"
+    - Syntax when the variable to which the receiver function is bound to is not getting used inside the reciver function:
+      ```
+      func (deck) print() {
+        fmt.println("This function prints a deck")
+      }
+      ```
+      - Notice is this receiver function as we do not use the variable to which the function is bounded to, we do not need to declare the variable, only putting the type name is enough.
 - Write to a File in golang: https://pkg.go.dev/os#WriteFile
   > func WriteFile(name string, data []byte, perm FileMode) error
   ```
@@ -621,6 +630,7 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
     fmt.Println(colors)               //map[]
     colors["white"] = "#ffffff"
     fmt.Println(colors) //map[white:#ffffff]
+  }
   ```
 - Delete elements in a map:
   ```
@@ -662,7 +672,134 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
     - Value Type!
 ---
 ### 5. interfaces
+- Problem that interface solves:
+  - Problem:
+    - Every value has a type
+    - Every function has to specify the type of its arguments
+  - Food for thought:
+    - Every function we ever write has to be rewritten to accomodate different types even if the logic in it is identical?
+  - Interface helps in resolving this issue among others.
+- Go does not support overloading. So we cannot have two functions having same name even if their arguments are different. Unless they are reveiver functions and are bounded to different types.
+- Code without interfaces:
+  ```
+  package main
 
+  import "fmt"
+
+  type englistBot struct{}
+  type spanishBot struct{}
+
+  func main() {
+    eb := englistBot{}
+    sb := spanishBot{}
+
+    printEnglishGreeting(eb) //Hello There!
+    printSpanishGreeting(sb) //Hola!
+  }
+
+  func printEnglishGreeting(eb englistBot) {
+    fmt.Println(eb.getGreeting())
+  }
+
+  func printSpanishGreeting(sb spanishBot) {
+    fmt.Println(sb.getGreeting())
+  }
+
+  func (englistBot) getGreeting() string {
+    // VERY custom logic for generating an english greeting
+    return "Hello There!"
+  }
+
+  func (spanishBot) getGreeting() string {
+    // VERY custom logic for generating an spanish greeting
+    return "Hola!"
+  }
+  ```  
+  - If we use interfaces we can write the same logic that printEnglishGreeting and printSpanishGreeting are implementing in a same function and stop code replication.
+  - One thing to note is that, for both receiver functions, getGreeting, we only used the type of the variable not the variable itself. It is allowed as we are not using it anywhere inside the code.
+- Code with interface:
+  ```
+  package main
+
+  import "fmt"
+
+  type bot interface {
+    getGreeting() string
+  }
+
+  type englistBot struct{}
+  type spanishBot struct{}
+
+  func main() {
+    eb := englistBot{}
+    sb := spanishBot{}
+
+    printGreeting(eb) //Hello There!
+    printGreeting(sb) //Hola!
+  }
+
+  func printGreeting(b bot) {
+    fmt.Println(b.getGreeting())
+  }
+
+  func (englistBot) getGreeting() string {
+    // VERY custom logic for generating an english greeting
+    return "Hello There!"
+  }
+
+  func (spanishBot) getGreeting() string {
+    // VERY custom logic for generating an spanish greeting
+    return "Hola!"
+  }
+  ``` 
+  - Explanation:
+    - type bot interface
+      - It is telling our program, it has a new type called 'bot' now.
+      - Imagine, we are defining some behavior in bot interface that are common to all different bots (englishBot and spanishBot) that we might have. 
+      - Those all bots share the same implementation from the base bot interface type.
+    - getGreeting() string
+      - This line being inside the bot interface is practically telling all the custom types that "If you are a type in this program with a function called 'getGreeting' and you return a string then you are now an honorary member of type bot"
+      - So, it basically says that if there are any other type in the program that has a function called getGreeting associated with it (or implements a function called getGreeting. Also, getGreeting is associated with the type and not the other way around. This means that getGreeting expects to see that type.) and returns a string, then that type is automatically promoted to being of type bot (It still retains its orginal type, the bot type is just an addition to it).
+      - So, now we can now imagine that englishBot and spanishBot are also of type bot.
+    - func printGreeting(b bot)
+      - Now that englishBot and spanishBot are also an honorary member of type 'bot', they can now call this function called 'printGreeting'.
+  - So, basically in interfaces we provide some kind of description and any type that has attributes matching with those descriptions, become the interface type also. And we can use those types anywhere we expect to see that interface type.
+    - Like we can use the englishBot and the spanishBot wherever we expect to see variable of type bot.
+- Interface syntax:
+  ```
+  type user struct {
+    name string
+  }
+
+  type bot interface {
+    getGreeting(string, int) (string, error)
+    getBotVersion() float64
+    respondToUser(user) string
+  }
+  ```
+  - bot -> Interace name
+  - getGreeting -> Function name
+  - (string, int) -> List of argument types
+  - (string, error) -> List of return types
+- If we want a type to qualify as interface type bot, then we need to make sure they fullfill the complete description along with exact argument types and exact return type.
+- A function cannot have interface type receiver.
+- Example of types:
+  - **Concrete Type**: A Concrete type is something that we can actually create a value out of directly and then access it and change it and create new copies of it and what not. Concrete Types are not only the built-in types of the language but also custom ones that we declare by extending some of the different types.
+    - map
+    - struct
+    - int
+    - string
+    - englishBot
+    - and many more...
+  - **Interface Type**: We cannot directly create value out of interface type.
+    - interface
+    - bot
+- Extra Notes:
+  - Interfaces are **not** generic types => Other languages have 'generic' types - go does not. (From v1.18, go also has generics - [Link](https://go.dev/blog/intro-generics))
+  - Interfaces are 'implicit' => We don't manually have to say that our custom type satisfies some interface.
+  - Interfaces are a contracct to help us manage types => GARBAGE IN -> GARBAGE OUT. If our custom type's implementation of a function is broken then interfaces won't help us.
+  - Interfaces are tough. Step #1 is understanding how to read them => Understand how to read interfaces in the standard lib. Writing your own interfaces is tough and requires experience. 
+- Interfaces are not necessary in Go code. But they are good fo code quality.
 ---
 ### 6. http
 
