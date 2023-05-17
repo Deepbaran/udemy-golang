@@ -986,6 +986,8 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
       ```
     - From the above Function Literal, we will get the below warning:
       - > loop variable l captured by func literal
+    - The main reason we are getting this warning is because Go provides Lexical scoping.
+      - Lexical scope is the ability of a function scope to access variables from the parent scope.
     - Below is the diagram to undearstand the warning:
       - ![](imgs/channels16.PNG)
       - Whenever we receive a value from our channel, we assign it to the variable l in the for loop in our code.
