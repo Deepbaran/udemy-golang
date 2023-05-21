@@ -40,6 +40,7 @@ My practice code with Udemy Golang course <https://www.udemy.com/go-the-complete
     go test                     -> Runs any tests associated with the current project
     go mod init dirname         -> Creates a go module
     go run .                    -> If module is initialized inside the package, then it will execute all the files in the package. Entrypoint being the main function.
+    go mod tidy                 -> This command ensures that the go.mod file contains the correct dependencies and versions used in your codebase. This also creates a go.sum file
     ```
 - What does 'package main' mean?
   - A package in go is like a project or a workspace.
